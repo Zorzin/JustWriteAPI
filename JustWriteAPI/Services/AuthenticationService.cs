@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using JustWriteAPI.Models.Parameters.Authentication;
 using JustWriteAPI.Repositories.Interfaces;
 using JustWriteAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,22 +25,22 @@ namespace JustWriteAPI.Services
         }
 
 
-        public async Task<AuthorAuthenticationModel> AuthenticateUser(LoginModel login)
+        public async Task<string> GetToken(LoginModel login)
         {
-            if (string.IsNullOrEmpty(login.Username) || string.IsNullOrEmpty(login.Password)) return null;
+            var user = await this.AuthenticateUser(login);
 
-            var userId = await this._authenticationRepository.GetUserId(login.Username);
-            var dbModel = await this._authenticationRepository.GetAuthorAuthenticationModel(userId);
-
-            if (BCrypt.CheckPassword(login.Password, dbModel.Password))
+            if (user != null)
             {
-                return dbModel;
+                var tokenString = this.BuildToken(user);
+                return tokenString;
             }
 
             return null;
         }
 
-        public string BuildToken(AuthorAuthenticationModel authorAuthentication)
+        /* Private methods */
+
+        private string BuildToken(AuthorAuthenticationModel authorAuthentication)
         {
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Sub, authorAuthentication.Login),
@@ -57,6 +58,21 @@ namespace JustWriteAPI.Services
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private async Task<AuthorAuthenticationModel> AuthenticateUser(LoginModel login)
+        {
+            if (string.IsNullOrEmpty(login.Username) || string.IsNullOrEmpty(login.Password)) return null;
+
+            var userId = await this._authenticationRepository.GetUserId(login.Username);
+            var dbModel = await this._authenticationRepository.GetAuthorAuthenticationModel(userId);
+
+            if (BCrypt.CheckPassword(login.Password, dbModel.Password))
+            {
+                return dbModel;
+            }
+
+            return null;
         }
     }
 }

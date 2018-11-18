@@ -31,21 +31,15 @@ namespace JustWriteAPI.Controllers
         public async Task<IActionResult> CreateToken([FromBody]LoginModel login)
         {
             IActionResult response = Unauthorized();
-            var user = await Authenticate(login);
 
-            if (user != null)
+            var tokenString = await this._authenticationService.GetToken(login);
+
+            if (!string.IsNullOrEmpty(tokenString))
             {
-                var tokenString = this._authenticationService.BuildToken(user);
                 response = Ok(new { token = tokenString });
             }
 
             return response;
-        }
-
-        private async Task<AuthorAuthenticationModel> Authenticate(LoginModel login)
-        {
-            return await this._authenticationService.AuthenticateUser(login);
-            
         }
     }
 }
