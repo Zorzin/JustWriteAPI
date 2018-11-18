@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 namespace JustWriteAPI.Models.Parameters.Authentication
 {
-    public class UserModel
+    public class AuthorAuthenticationModel
     {
-        public string Name { get; set; }
+        public string Login { get; set; }
         public string Email { get; set; }
+        public string Password { get; set; }
     }
 }
